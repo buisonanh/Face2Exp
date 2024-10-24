@@ -78,9 +78,9 @@ def get_raf_data(args):
         transforms.Normalize(mean=aff_mean, std=aff_std)
     ])
 
-    path_label='/data/raf_train.csv'
-    path_unlabel='/data/raf_aff_train.csv'
-    path_test='/data/raf_test.csv'
+    path_label='/data/data/raf_train.csv'
+    path_unlabel='/data/data/raf_aff_train.csv'
+    path_test='/data/data/raf_test.csv'
     DF_label=pd.read_csv(path_label)
     DF_unlabel=pd.read_csv(path_unlabel)
     DF_test=pd.read_csv(path_test)
