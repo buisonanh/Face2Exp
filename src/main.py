@@ -505,7 +505,7 @@ def main():
         torch.distributed.barrier()
 
 
-    labeled_dataset, unlabeled_dataset, test_dataset = DATASET_GETTERS['get_data'](args)
+    labeled_dataset, unlabeled_dataset, test_dataset = DATASET_GETTERS['get_raf_data'](args)
 
     if args.local_rank == 0:
         torch.distributed.barrier()
