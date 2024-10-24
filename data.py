@@ -84,9 +84,9 @@ def get_raf_data(args):
     DF_label=pd.read_csv(path_label)
     DF_unlabel=pd.read_csv(path_unlabel)
     DF_test=pd.read_csv(path_test)
-    label_dataset_dir='/kaggle/input/raf-db-dataset/DATASET/train'
+    label_dataset_dir='/kaggle/input/raf-db-aligned-data/aligned'
     unlabel_dataset_dir='/kaggle/input/vggface2/train'
-    test_dataset_dir='/kaggle/input/raf-db-dataset/DATASET/test'
+    test_dataset_dir='/kaggle/input/raf-db-aligned-data/aligned'
     label_dataset = RafData(data=DF_label, directory=label_dataset_dir, transform=transform_labeled)
     unlabel_dataset = RafData(data=DF_unlabel, directory=unlabel_dataset_dir,
                              transform=TransformMPL(args, mean=aff_mean, std=aff_std))
