@@ -151,24 +151,24 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
         end = time.time()
 
         try:
-            images_l, targets = labeled_iter.next()
+            images_l, targets = labeled_iter.__next__()
         except:
             if args.world_size > 1:
                 labeled_epoch += 1
                 labeled_loader.sampler.set_epoch(labeled_epoch)
             labeled_iter = iter(labeled_loader)
-            images_l, targets = labeled_iter.next()
+            images_l, targets = labeled_iter.__next__()
 
         try:
-            #             (images_uw, images_us), _ = unlabeled_iter.next()
-            (images_uw, images_us), unlabeled_targets = unlabeled_iter.next()
+            #             (images_uw, images_us), _ = unlabeled_iter.__next__()
+            (images_uw, images_us), unlabeled_targets = unlabeled_iter.__next__()
         except:
             if args.world_size > 1:
                 unlabeled_epoch += 1
                 unlabeled_loader.sampler.set_epoch(unlabeled_epoch)
             unlabeled_iter = iter(unlabeled_loader)
-            #             (images_uw, images_us), _ = unlabeled_iter.next()
-            (images_uw, images_us), unlabeled_targets = unlabeled_iter.next()
+            #             (images_uw, images_us), _ = unlabeled_iter.__next__()
+            (images_uw, images_us), unlabeled_targets = unlabeled_iter.__next__()
 
         data_time.update(time.time() - end)
 
