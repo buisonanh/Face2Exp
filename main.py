@@ -139,11 +139,11 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
             pbar = tqdm(range(args.eval_step), disable=args.local_rank not in [-1, 0])
             batch_time = AverageMeter()
             data_time = AverageMeter()
-            s_losses = AverageMeter()
-            t_losses = AverageMeter()
-            t_losses_l = AverageMeter()
-            t_losses_u = AverageMeter()
-            t_losses_mpl = AverageMeter()
+            s_losses = AverageMeter() # sonanh: student loss
+            t_losses = AverageMeter() # sonanh: teacher loss
+            t_losses_l = AverageMeter() # sonanh: teacher labeled data loss
+            t_losses_u = AverageMeter() # sonanh: teacher unlabeled data loss
+            t_losses_mpl = AverageMeter() # sonanh: teacher meta pseudo label loss
             mean_mask = AverageMeter()
 
         teacher_model.train()
@@ -151,17 +151,17 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
         end = time.time()
 
         try:
-            images_l, targets = labeled_iter.__next__()
+            images_l, targets = labeled_iter.__next__() # sonanh: labeled images
         except:
             if args.world_size > 1:
                 labeled_epoch += 1
                 labeled_loader.sampler.set_epoch(labeled_epoch)
             labeled_iter = iter(labeled_loader)
-            images_l, targets = labeled_iter.__next__()
+            images_l, targets = labeled_iter.__next__() 
 
         try:
             #             (images_uw, images_us), _ = unlabeled_iter.__next__()
-            (images_uw, images_us), unlabeled_targets = unlabeled_iter.__next__()
+            (images_uw, images_us), unlabeled_targets = unlabeled_iter.__next__()  
         except:
             if args.world_size > 1:
                 unlabeled_epoch += 1
@@ -173,33 +173,35 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
         data_time.update(time.time() - end)
 
         images_l = images_l.to(args.device)
-        images_uw = images_uw.to(args.device)
-        images_us = images_us.to(args.device)
+        images_uw = images_uw.to(args.device) # sonanh: unlabeled-weekly-augmented images
+        images_us = images_us.to(args.device) # sonanh: unlabeled-strongly-augmented images
         targets = targets.to(args.device)
-        unlabeled_targets = unlabeled_targets.to(args.device)
+        unlabeled_targets = unlabeled_targets.to(args.device) # sonanh: why ???
         with amp.autocast(enabled=args.amp):
             batch_size = images_l.shape[0]
             t_images = torch.cat((images_l, images_uw, images_us))
             t_logits = teacher_model(t_images)
-            t_logits_l = t_logits[:batch_size]
-            t_logits_uw, t_logits_us = t_logits[batch_size:].chunk(2)
+            t_logits_l = t_logits[:batch_size] # sonanh: teacher labeled output
+            t_logits_uw, t_logits_us = t_logits[batch_size:].chunk(2) # sonanh: teacher unlabeled weakly/strongly augmented data output
             del t_logits
             #             t_logits_l = torch.tensor(t_logits_l, dtype=torch.int64)
             targets = torch.tensor(targets, dtype=torch.int64)
-            t_loss_l = criterion(t_logits_l, targets)
+            t_loss_l = criterion(t_logits_l, targets) # sonanh: teacher labeled loss
 
-            soft_pseudo_label = torch.softmax(t_logits_uw.detach() / args.temperature, dim=-1)
+            soft_pseudo_label = torch.softmax(t_logits_uw.detach() / args.temperature, dim=-1) # sonanh: prob distribution for each sample in batch
             max_probs, hard_pseudo_label = torch.max(soft_pseudo_label, dim=-1)
+            # sonanh: max_probs: highest probability for each sample in batch
+            # sonanh: hard_pseudo_label: the index of the class with highest prob
 
-            mask = max_probs.ge(args.threshold).float()
+            mask = max_probs.ge(args.threshold).float() # sonanh: check if the max_prob >= confidence threshold
             t_loss_u_no_mask = torch.mean(
-                -(soft_pseudo_label * torch.log_softmax(t_logits_us, dim=-1)).sum(dim=-1)
+                -(soft_pseudo_label * torch.log_softmax(t_logits_us, dim=-1)).sum(dim=-1) # sonanh: unsupervised loss with out masking
             )
             t_loss_u = torch.mean(
-                -(soft_pseudo_label * torch.log_softmax(t_logits_us, dim=-1)).sum(dim=-1) * mask
+                -(soft_pseudo_label * torch.log_softmax(t_logits_us, dim=-1)).sum(dim=-1) * mask # sonanh: teacher unsupervised loss with masking
             )
-            weight_u = args.lambda_u * min(1., (step + 1) / args.uda_steps)
-            t_loss_uda = t_loss_l + weight_u * t_loss_u_no_mask
+            weight_u = args.lambda_u * min(1., (step + 1) / args.uda_steps) # sonanh: this weight gradually increase in training
+            t_loss_uda = t_loss_l + weight_u * t_loss_u_no_mask # sonanh: total teacher unsupervised loss
 
             s_images = torch.cat((images_l, images_us))
             s_logits = student_model(s_images)
