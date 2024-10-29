@@ -79,13 +79,13 @@ def get_raf_data(args):
     ])
 
     path_label='/kaggle/working/Face2Exp/data/data/raf_train.csv'
-    path_unlabel='/kaggle/working/Face2Exp/data/data/raf_aff_train.csv'
+    path_unlabel='/kaggle/input/raf-db-dataset/train_labels.csv'
     path_test='/kaggle/working/Face2Exp/data/data/raf_test.csv'
     DF_label=pd.read_csv(path_label)
     DF_unlabel=pd.read_csv(path_unlabel)
     DF_test=pd.read_csv(path_test)
     label_dataset_dir='/kaggle/input/raf-db-aligned-data'
-    unlabel_dataset_dir='/kaggle/input/vggface2/train'
+    unlabel_dataset_dir='/kaggle/input/raf-db-dataset/train_labels.csv'
     test_dataset_dir='/kaggle/input/raf-db-aligned-data'
     label_dataset = RafData(data=DF_label, directory=label_dataset_dir, transform=transform_labeled)
     unlabel_dataset = RafData(data=DF_unlabel, directory=unlabel_dataset_dir,
