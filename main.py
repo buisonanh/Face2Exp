@@ -346,36 +346,38 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
                     name = args.name
                     filename = f'{args.save_path}/{name}_{str(step+1)}_{str(int(top1))}.pth.tar'
                     torch.save(state, filename, _use_new_zipfile_serialization=False)
-                
-            if step % 100 == 0:
-                # Get predictions from the adaptation (student) network
-                with torch.no_grad():
-                    s_logits = student_model(images_us)  # Use your batch of unlabeled images or pseudo-labeled data
-                    predicted_classes = torch.argmax(s_logits, dim=1).cpu().numpy()
-                
-                # Calculate the distribution of predicted classes
-                unique, counts = np.unique(predicted_classes, return_counts=True)
-                class_distribution = dict(zip(unique, counts))
-                
-                # Store the distribution in the dictionary
-                prediction_distributions[step] = class_distribution
-
-        # Define the class names (assuming num_classes is 7 as per your code)
-        class_names = [f"Class {i}" for i in range(args.num_classes)]
-
-        # Plot and save the class distribution over time as images
-        for step, class_distribution in prediction_distributions.items():
-            # Create the bar plot
-            plt.figure(figsize=(10, 6))
-            plt.bar(class_names, [class_distribution.get(i, 0) for i in range(args.num_classes)], color='skyblue')
-            plt.title(f"Prediction Distribution at Step {step}")
-            plt.xlabel("Classes")
-            plt.ylabel("Frequency")
             
-            # Save the plot as an image
-            image_path = os.path.join(output_dir, f"prediction_distribution_step_{step}.png")
-            plt.savefig(image_path)
-            plt.close()  # Close the plot to free memor
+        ############################
+            # Get predictions from the adaptation (student) network
+            with torch.no_grad():
+                s_logits = student_model(images_us)  # Use your batch of unlabeled images or pseudo-labeled data
+                predicted_classes = torch.argmax(s_logits, dim=1).cpu().numpy()
+            
+            # Calculate the distribution of predicted classes
+            unique, counts = np.unique(predicted_classes, return_counts=True)
+            class_distribution = dict(zip(unique, counts))
+            
+            # Store the distribution in the dictionary
+            prediction_distributions[step] = class_distribution
+
+            # Define the class names (assuming num_classes is 7 as per your code)
+            class_names = [f"Class {i}" for i in range(args.num_classes)]
+
+            # Plot and save the class distribution over time as images
+            for step, class_distribution in prediction_distributions.items():
+                # Create the bar plot
+                plt.figure(figsize=(10, 6))
+                plt.bar(class_names, [class_distribution.get(i, 0) for i in range(args.num_classes)], color='skyblue')
+                plt.title(f"Prediction Distribution at Step {step}")
+                plt.xlabel("Classes")
+                plt.ylabel("Frequency")
+                
+                # Save the plot as an image
+                image_path = os.path.join(output_dir, f"prediction_distribution_step_{step}.png")
+                plt.savefig(image_path)
+                plt.close()  # Close the plot to free memor
+
+        ############################
 
 
     # finetune
