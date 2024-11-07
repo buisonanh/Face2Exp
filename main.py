@@ -134,6 +134,8 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
     #     limit = 3.0**(0.5)  # 3 = 6 / (f_in + f_out)
     #     nn.init.uniform_(moving_dot_product, -limit, limit)
 
+    prediction_distributions = {}
+
     for step in range(args.start_step, args.total_steps):
         if step % args.eval_step == 0:
             pbar = tqdm(range(args.eval_step), disable=args.local_rank not in [-1, 0])
@@ -339,6 +341,40 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
                     name = args.name
                     filename = f'{args.save_path}/{name}_{str(step+1)}_{str(int(top1))}.pth.tar'
                     torch.save(state, filename, _use_new_zipfile_serialization=False)
+                
+            if step % 100 == 0:
+                # Get predictions from the adaptation (student) network
+                with torch.no_grad():
+                    s_logits = student_model(images_us)  # Use your batch of unlabeled images or pseudo-labeled data
+                    predicted_classes = torch.argmax(s_logits, dim=1).cpu().numpy()
+                
+                # Calculate the distribution of predicted classes
+                unique, counts = np.unique(predicted_classes, return_counts=True)
+                class_distribution = dict(zip(unique, counts))
+                
+                # Store the distribution in the dictionary
+                prediction_distributions[step] = class_distribution
+
+        from torch.utils.tensorboard import SummaryWriter
+        from matplotlib import pyplot as plt
+
+        # Initialize TensorBoard writer
+        writer = SummaryWriter(log_dir=f"./logs/{args.name}")
+        class_names = [f"Class {i}" for i in range(args.num_classes)]
+
+        # Log the prediction distribution to TensorBoard every 100 steps
+        for step, class_distribution in prediction_distributions.items():
+            fig, ax = plt.subplots()
+            ax.bar(class_names, [class_distribution.get(i, 0) for i in range(args.num_classes)])
+            ax.set_title(f"Prediction Distribution at Step {step}")
+            ax.set_xlabel("Classes")
+            ax.set_ylabel("Frequency")
+
+            # Add plot to TensorBoard
+            writer.add_figure(f"Prediction Distribution at Step {step}", fig, step)
+            plt.close(fig)  # Close the plot to avoid displaying it during training
+
+
     # finetune
     del t_scaler, t_scheduler, t_optimizer, teacher_model, unlabeled_loader
     del s_scaler, s_scheduler, s_optimizer
