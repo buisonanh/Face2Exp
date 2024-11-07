@@ -354,7 +354,7 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
                     torch.save(state, filename, _use_new_zipfile_serialization=False)
             
         ############################
-            pseudo_classes = hard_pseudo_label.cpu().numpy()
+            pseudo_classes = soft_pseudo_label.cpu().numpy()
             unique, counts = np.unique(pseudo_classes, return_counts=True)
             pseudo_label_distributions[step] = dict(zip(unique, counts))
 
@@ -367,7 +367,7 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
             unique, counts = np.unique(predicted_classes, return_counts=True)
             prediction_distributions[step] = dict(zip(unique, counts))
 
-            # Plot and save both distributions as images
+            #  Plot and save both distributions as images
             fig, axes = plt.subplots(1, 2, figsize=(15, 6))
             
             # Pseudo-label distribution plot
@@ -388,11 +388,12 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
             plt.savefig(image_path)
             plt.close(fig)  # Close the plot to free memory
 
-    with open("pseudo_label_distributions.txt", "w") as f:
-        f.write(str(pseudo_label_distributions))
+    with open(os.path.join(output_dir, "pseudo_label_distributions.txt"), "w") as file:
+        file.write(str(pseudo_label_distributions))
+    
+    with open(os.path.join(output_dir, "prediction_distributions.txt"), "w") as file:
+        file.write(str(prediction_distributions))
 
-    with open("prediction_distributions.txt", "w") as f:
-        f.write(str(prediction_distributions))
         ############################
 
 
