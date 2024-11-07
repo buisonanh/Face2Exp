@@ -78,8 +78,8 @@ def get_raf_data(args):
         transforms.Normalize(mean=aff_mean, std=aff_std)
     ])
 
-    path_label='/kaggle/working/Face2Exp/data/data/raf_train.csv'
-    path_unlabel='/kaggle/working/Face2Exp/data/data/raf_train.csv'
+    path_label='/kaggle/working/Face2Exp/data/data/raf_train_70.csv'
+    path_unlabel='/kaggle/working/Face2Exp/data/data/raf_train_30.csv'
     path_test='/kaggle/working/Face2Exp/data/data/raf_test.csv'
     DF_label=pd.read_csv(path_label)
     DF_unlabel=pd.read_csv(path_unlabel)
