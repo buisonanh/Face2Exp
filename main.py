@@ -136,10 +136,16 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
     #     limit = 3.0**(0.5)  # 3 = 6 / (f_in + f_out)
     #     nn.init.uniform_(moving_dot_product, -limit, limit)
 
+
+    # Define the class names (assuming num_classes is 7 as per your code)
+    class_names = [f"Class {i}" for i in range(args.num_classes)]
     prediction_distributions = {}
+    
     # Create a directory to save the images
     output_dir = "./prediction_distributions"
     os.makedirs(output_dir, exist_ok=True)
+    pseudo_label_distributions = {}
+
 
     for step in range(args.start_step, args.total_steps):
         if step % args.eval_step == 0:
@@ -348,6 +354,10 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
                     torch.save(state, filename, _use_new_zipfile_serialization=False)
             
         ############################
+            pseudo_classes = hard_pseudo_label.cpu().numpy()
+            unique, counts = np.unique(pseudo_classes, return_counts=True)
+            pseudo_label_distributions[step] = dict(zip(unique, counts))
+
             # Get predictions from the adaptation (student) network
             with torch.no_grad():
                 s_logits = student_model(images_us)  # Use your batch of unlabeled images or pseudo-labeled data
@@ -355,27 +365,28 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
             
             # Calculate the distribution of predicted classes
             unique, counts = np.unique(predicted_classes, return_counts=True)
-            class_distribution = dict(zip(unique, counts))
+            prediction_distributions[step] = dict(zip(unique, counts))
+
+            # Plot and save both distributions as images
+            fig, axes = plt.subplots(1, 2, figsize=(15, 6))
             
-            # Store the distribution in the dictionary
-            prediction_distributions[step] = class_distribution
+            # Pseudo-label distribution plot
+            axes[0].bar(class_names, [pseudo_label_distributions[step].get(i, 0) for i in range(args.num_classes)], color='lightcoral')
+            axes[0].set_title(f"Pseudo-Label Distribution at Step {step}")
+            axes[0].set_xlabel("Classes")
+            axes[0].set_ylabel("Frequency")
 
-            # Define the class names (assuming num_classes is 7 as per your code)
-            class_names = [f"Class {i}" for i in range(args.num_classes)]
+            # Prediction distribution plot
+            axes[1].bar(class_names, [prediction_distributions[step].get(i, 0) for i in range(args.num_classes)], color='skyblue')
+            axes[1].set_title(f"Prediction Distribution at Step {step}")
+            axes[1].set_xlabel("Classes")
+            axes[1].set_ylabel("Frequency")
 
-            # Plot and save the class distribution over time as images
-            for step, class_distribution in prediction_distributions.items():
-                # Create the bar plot
-                plt.figure(figsize=(10, 6))
-                plt.bar(class_names, [class_distribution.get(i, 0) for i in range(args.num_classes)], color='skyblue')
-                plt.title(f"Prediction Distribution at Step {step}")
-                plt.xlabel("Classes")
-                plt.ylabel("Frequency")
-                
-                # Save the plot as an image
-                image_path = os.path.join(output_dir, f"prediction_distribution_step_{step}.png")
-                plt.savefig(image_path)
-                plt.close()  # Close the plot to free memor
+            # Save the comparison plot as an image
+            plt.tight_layout()
+            image_path = os.path.join(output_dir, f"distribution_comparison_step_{step}.png")
+            plt.savefig(image_path)
+            plt.close(fig)  # Close the plot to free memory
 
         ############################
 
