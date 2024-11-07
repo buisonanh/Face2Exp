@@ -381,18 +381,18 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
 
 
     # finetune
-    del t_scaler, t_scheduler, t_optimizer, teacher_model, unlabeled_loader
-    del s_scaler, s_scheduler, s_optimizer
-    ckpt_name = f'{args.save_path}/{args.name}_best.pth.tar'
-    loc = f'cuda:{args.gpu}'
-    checkpoint = torch.load(ckpt_name, map_location=loc)
-    logger.info(f"=> loading checkpoint '{ckpt_name}'")
-    if checkpoint['avg_state_dict'] is not None:
-        model_load_state_dict(student_model, checkpoint['avg_state_dict'])
-    else:
-        model_load_state_dict(student_model, checkpoint['student_state_dict'])
-    finetune(args, labeled_loader, test_loader, student_model, criterion, loss_file, acc_file)
-    return
+    # del t_scaler, t_scheduler, t_optimizer, teacher_model, unlabeled_loader
+    # del s_scaler, s_scheduler, s_optimizer
+    # ckpt_name = f'{args.save_path}/{args.name}_best.pth.tar'
+    # loc = f'cuda:{args.gpu}'
+    # checkpoint = torch.load(ckpt_name, map_location=loc)
+    # logger.info(f"=> loading checkpoint '{ckpt_name}'")
+    # if checkpoint['avg_state_dict'] is not None:
+    #     model_load_state_dict(student_model, checkpoint['avg_state_dict'])
+    # else:
+    #     model_load_state_dict(student_model, checkpoint['student_state_dict'])
+    # finetune(args, labeled_loader, test_loader, student_model, criterion, loss_file, acc_file)
+    # return
 
 
 def evaluate(args, test_loader, model, criterion):
@@ -439,9 +439,9 @@ def finetune(args, train_loader, test_loader, model, criterion):
         #         num_workers=0,
         pin_memory=True)
     optimizer = optim.SGD(model.parameters(),
-                          lr=args.finetune_lr,
-                          momentum=args.finetune_momentum,
-                          weight_decay=args.finetune_weight_decay)
+                            lr=args.finetune_lr,
+                            momentum=args.finetune_momentum,
+                            weight_decay=args.finetune_weight_decay)
     scaler = amp.GradScaler(enabled=args.amp)
 
     logger.info("***** Running Finetuning *****")
