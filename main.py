@@ -354,9 +354,10 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
                     torch.save(state, filename, _use_new_zipfile_serialization=False)
             
         ############################
-            pseudo_classes = soft_pseudo_label.cpu().numpy()
-            unique, counts = np.unique(pseudo_classes, return_counts=True)
-            pseudo_label_distributions[step] = dict(zip(unique, counts))
+            # Get the soft pseudo-label distribution
+            pseudo_probs  = soft_pseudo_label.cpu().numpy()
+            mean_pseudo_probs = np.mean(pseudo_probs, axis=0)
+            pseudo_label_distributions[step] = mean_pseudo_probs
 
             # Get predictions from the adaptation (student) network
             with torch.no_grad():
