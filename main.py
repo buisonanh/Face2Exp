@@ -364,8 +364,8 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
                 predicted_classes = torch.argmax(s_logits, dim=1).cpu().numpy()
             
             # Calculate the distribution of predicted classes
-            unique, counts = np.unique(predicted_classes, return_counts=True)
-            prediction_distributions[step] = dict(zip(unique, counts))
+            unique2, counts2 = np.unique(predicted_classes, return_counts=True)
+            prediction_distributions[step] = dict(zip(unique2, counts2))
 
             #  Plot and save both distributions as images
             fig, axes = plt.subplots(1, 2, figsize=(15, 6))
