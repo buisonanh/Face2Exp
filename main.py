@@ -388,6 +388,11 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
             plt.savefig(image_path)
             plt.close(fig)  # Close the plot to free memory
 
+    with open("pseudo_label_distributions.txt", "w") as f:
+        f.write(str(pseudo_label_distributions))
+
+    with open("prediction_distributions.txt", "w") as f:
+        f.write(str(prediction_distributions))
         ############################
 
 
