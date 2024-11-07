@@ -26,6 +26,8 @@ from models import ModelEMA
 from utils import (AverageMeter, accuracy, create_loss_fn,
                    save_checkpoint, reduce_tensor, model_load_state_dict)
 
+import matplotlib.pyplot as plt
+
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 time_stamp = str(int(time.time()))
 
@@ -135,6 +137,9 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
     #     nn.init.uniform_(moving_dot_product, -limit, limit)
 
     prediction_distributions = {}
+    # Create a directory to save the images
+    output_dir = "./prediction_distributions"
+    os.makedirs(output_dir, exist_ok=True)
 
     for step in range(args.start_step, args.total_steps):
         if step % args.eval_step == 0:
@@ -355,24 +360,22 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
                 # Store the distribution in the dictionary
                 prediction_distributions[step] = class_distribution
 
-        from torch.utils.tensorboard import SummaryWriter
-        from matplotlib import pyplot as plt
-
-        # Initialize TensorBoard writer
-        writer = SummaryWriter(log_dir=f"./logs/{args.name}")
+        # Define the class names (assuming num_classes is 7 as per your code)
         class_names = [f"Class {i}" for i in range(args.num_classes)]
 
-        # Log the prediction distribution to TensorBoard every 100 steps
+        # Plot and save the class distribution over time as images
         for step, class_distribution in prediction_distributions.items():
-            fig, ax = plt.subplots()
-            ax.bar(class_names, [class_distribution.get(i, 0) for i in range(args.num_classes)])
-            ax.set_title(f"Prediction Distribution at Step {step}")
-            ax.set_xlabel("Classes")
-            ax.set_ylabel("Frequency")
-
-            # Add plot to TensorBoard
-            writer.add_figure(f"Prediction Distribution at Step {step}", fig, step)
-            plt.close(fig)  # Close the plot to avoid displaying it during training
+            # Create the bar plot
+            plt.figure(figsize=(10, 6))
+            plt.bar(class_names, [class_distribution.get(i, 0) for i in range(args.num_classes)], color='skyblue')
+            plt.title(f"Prediction Distribution at Step {step}")
+            plt.xlabel("Classes")
+            plt.ylabel("Frequency")
+            
+            # Save the plot as an image
+            image_path = os.path.join(output_dir, f"prediction_distribution_step_{step}.png")
+            plt.savefig(image_path)
+            plt.close()  # Close the plot to free memor
 
 
     # finetune
