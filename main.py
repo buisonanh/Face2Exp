@@ -267,8 +267,7 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
         pbar.set_description(
             f"Train Iter: {step + 1:3}/{args.total_steps:3}. "
             f"LR: {get_lr(s_optimizer):.4f}. Data: {data_time.avg:.2f}s. "
-            f"Batch: {batch_time.avg:.2f}s. S_Loss: {s_losses.avg:.4f}. "
-            f"T_Loss: {t_losses.avg:.4f}. Mask: {mean_mask.avg:.4f}. ")
+            f"Batch: {batch_time.avg:.2f}s. S_Loss: {s_losses.avg:.4f}. T_Loss: {t_losses.avg:.4f}. Mask: {mean_mask.avg:.4f}. ")
         pbar.update()
         if args.local_rank in [-1, 0]:
             args.writer.add_scalar("lr", get_lr(s_optimizer), step)
