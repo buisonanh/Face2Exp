@@ -372,7 +372,7 @@ def train_loop(args, labeled_loader, unlabeled_loader, test_loader,
             fig, axes = plt.subplots(1, 2, figsize=(15, 6))
             
             # Pseudo-label distribution plot
-            axes[0].bar(class_names, [pseudo_label_distributions[step].get(i, 0) for i in range(args.num_classes)], color='lightcoral')
+            axes[0].bar(class_names, mean_pseudo_probs, color='lightcoral')
             axes[0].set_title(f"Pseudo-Label Distribution at Step {step}")
             axes[0].set_xlabel("Classes")
             axes[0].set_ylabel("Frequency")
